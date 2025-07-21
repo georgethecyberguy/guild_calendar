@@ -5,112 +5,220 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guild Calendar 2025</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #000; color: #fff; padding: 20px; }
-    h1 { text-align: center; color: #fff; }
-    .controls { text-align: center; margin: 10px 0; }
-    select, .time-input { background-color: #000; color: #fff; border: 1px solid #333; padding: 5px; font-size: 14px; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #000; margin-top: 10px; }
-    .day-header { background-color: #111; text-align: center; padding: 8px; font-weight: bold; color: #fff; }
-    .day-cell { background-color: #000; border: 1px solid #333; display: flex; flex-direction: column; align-items: flex-start; padding: 6px; color: #fff; aspect-ratio: 1 / 1; overflow: hidden; }
-    .day-number { font-weight: bold; width: 100%; margin-bottom: 4px; }
-    .entry-count { width: 100%; text-align: center; font-size: 13px; margin-bottom: 4px; color: #ffcc00; }
-    .entries { flex: 1; display: flex; flex-direction: column; width: 100%; overflow-y: auto; }
-    .entry { display: flex; align-items: center; gap: 4px; margin-top: 2px; width: 100%; }
-    .time-input { width: 80px; }
-    .entry select, .entry input[type="text"] { background-color: #000; color: #fff; border: 1px solid #333; padding: 2px 4px; font-size: 12px; }
-    .entry input[type="text"] { flex: 1; }
-    #exportBtn { display: block; margin: 15px auto; padding: 8px 16px; font-size: 14px; background-color: #111; color: #fff; border: none; cursor: pointer; }
-    #exportBtn:hover { background-color: #333; }
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --panel-bg: #111;
+      --cell-bg: #000;
+      --header-bg: #111;
+      --border: #333;
+      --highlight: #ffcc00;
+      --modal-bg: rgba(0,0,0,0.8);
+      --transition: 0.3s ease;
+    }
+    .light-mode {
+      --bg: #fff;
+      --fg: #000;
+      --panel-bg: #f7f7f7;
+      --cell-bg: #fff;
+      --header-bg: #eee;
+      --border: #ccc;
+      --highlight: #007aff;
+      --modal-bg: rgba(255,255,255,0.8);
+    }
+    * { transition: background var(--transition), color var(--transition), border-color var(--transition); }
+    body { font-family: Arial, sans-serif; background: var(--bg); color: var(--fg); margin: 0; padding: 0; }
+    header { display: flex; justify-content: center; align-items: center; padding: 10px; background: var(--header-bg); }
+    header button, header span { background: none; border: none; color: var(--fg); font-size: 18px; margin: 0 10px; cursor: pointer; }
+    #settingsBtn { font-size: 18px; }
+    #modeBtn { font-size: 18px; }
+    #settingsPanel { overflow: hidden; max-height: 0; background: var(--panel-bg); padding: 0 10px; transition: max-height var(--transition); }
+    #settingsPanel.open { max-height: 200px; padding: 10px; }
+    .controls { display: none; }
+    #calendar { display: grid; grid-template-columns: repeat(7,1fr); gap: 1px; background: var(--bg); padding: 1px; }
+    .day-header { background: var(--panel-bg); text-align: center; padding: 8px; font-weight: bold; }
+    .day-cell { background: var(--cell-bg); border: 1px solid var(--border); padding: 8px; position: relative; cursor: pointer; }
+    .day-cell.today { border-color: var(--highlight); animation: pulse 1s; }
+    .day-cell .count { position: absolute; top: 4px; right: 4px; background: var(--panel-bg); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); justify-content: center; align-items: center; opacity: 0; transition: opacity var(--transition); }
+    .modal.show { display: flex; opacity: 1; }
+    .modal-content { background: var(--panel-bg); padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; transform: translateY(-10px); transition: transform var(--transition); }
+    .modal.show .modal-content { transform: translateY(0); }
+    .modal-content h3 { margin-top: 0; }
+    .modal-content .entry { display: flex; gap: 4px; margin-bottom: 6px; }
+    .modal-content select, .modal-content input, .modal-content textarea { background: var(--cell-bg); color: var(--fg); border: 1px solid var(--border); }
+    .modal-content select, .modal-content input { padding: 4px; font-size: 14px; }
+    .modal-content textarea { width: 100%; height: 60px; padding: 6px; font-size: 14px; margin-bottom: 10px; }
+    .modal-content button { padding: 6px 12px; margin-right: 10px; background: var(--border); color: var(--fg); border: none; cursor: pointer; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0px var(--highlight); } 50% { box-shadow: 0 0 10px var(--highlight); } 100% { box-shadow: 0 0 0px var(--highlight); } }
   </style>
 </head>
 <body>
-  <h1>Guild Calendar 2025</h1>
-  <div class="controls">
-    <select id="monthSelect">
-      <option value="0">January 2025</option>
-      <option value="1">February 2025</option>
-      <option value="2">March 2025</option>
-      <option value="3">April 2025</option>
-      <option value="4">May 2025</option>
-      <option value="5">June 2025</option>
-      <option value="6" selected>July 2025</option>
-      <option value="7">August 2025</option>
-      <option value="8">September 2025</option>
-      <option value="9">October 2025</option>
-      <option value="10">November 2025</option>
-      <option value="11">December 2025</option>
-    </select>
+  <header>
+    <button id="prevBtn">←</button>
+    <span id="monthLabel"></span>
+    <button id="nextBtn">→</button>
+    <button id="settingsBtn">⚙️</button>
+    <button id="modeBtn">🌓</button>
+  </header>
+  <div id="settingsPanel">
+    <label>Slots: <input id="slotCount" type="number" min="1" max="50" value="10" /></label>
+    <label>Hours: <input id="startHour" type="time" value="18:00" /> - <input id="endHour" type="time" value="23:00" /></label>
+    <button id="exportBtn">Share</button>
   </div>
-  <div id="calendar" class="calendar"></div>
-  <button id="exportBtn">Export Calendar</button>
+  <div id="calendar"></div>
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3 id="modalDate"></h3>
+      <div id="modalEntries"></div>
+      <textarea id="modalNotes" placeholder="Notes"></textarea>
+      <button id="saveBtn">Save</button>
+      <button id="closeBtn">Close</button>
+    </div>
+  </div>
   <script>
+    // Theme toggle
+    document.getElementById('modeBtn').onclick = () => document.body.classList.toggle('light-mode');
+    // Data
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const classOptions = [
-      { label:'Druid', value:'🐉' },{ label:'Mage', value:'🔥' },{ label:'Warrior', value:'🛡️' },
-      { label:'Hunter', value:'🏹' },{ label:'Priest', value:'🙏' },{ label:'Rogue', value:'🥷' },
-      { label:'Warlock', value:'🪄' },{ label:'Shaman', value:'🌩️' },{ label:'Paladin', value:'🛐' },
-      { label:'Monk', value:'🧘' },{ label:'Death Knight', value:'☠️' },{ label:'Demon Hunter', value:'👿' },
-      { label:'Evoker', value:'🧑‍💻' }
-    ];
+    const classOptions = ['🐉','🔥','🛡️','🏹','🙏','🥷','🪄','🌩️','🛐','🧘','☠️','👿','🧑‍💻'];
     const year = 2025;
+    let currentMonth = new Date().getFullYear()===year ? new Date().getMonth() : 0;
+    // Elements
     const calendarEl = document.getElementById('calendar');
-
-    function createEntry() {
-      const entry = document.createElement('div'); entry.className='entry';
-      const timeSelect = document.createElement('select'); timeSelect.className='time-input';
-      for(let i=0;i<24;i++){ const opt=document.createElement('option'); const h12=i%12===0?12:i%12; const ampm=i<12?'AM':'PM'; const label=h12+':00 '+ampm; opt.value=label; opt.textContent=label; timeSelect.appendChild(opt);} entry.appendChild(timeSelect);
-      const select=document.createElement('select'); const blank=document.createElement('option'); blank.value=''; blank.textContent='-'; select.appendChild(blank);
-      classOptions.forEach(opt=>{ const o=document.createElement('option'); o.value=opt.value; o.textContent=opt.value; o.title=opt.label; select.appendChild(o); }); entry.appendChild(select);
-      const input=document.createElement('input'); input.type='text'; input.placeholder='Name'; entry.appendChild(input);
-      return entry;
-    }
-
-    function renderCalendar(monthIndex) {
-      calendarEl.innerHTML='';
-      ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(d=>{ const hd=document.createElement('div'); hd.className='day-header'; hd.textContent=d; calendarEl.appendChild(hd); });
-      const firstDay=new Date(year,monthIndex,1).getDay();
-      const daysInMonth=new Date(year,monthIndex+1,0).getDate();
-      const totalCells=35;
-      for(let i=0;i<firstDay;i++){ const empty=document.createElement('div'); empty.className='day-cell'; calendarEl.appendChild(empty); }
-      for(let day=1;day<=daysInMonth;day++){
-        const cell=document.createElement('div'); cell.className='day-cell';
-        const num=document.createElement('div'); num.className='day-number'; num.textContent=day;
-        const count=document.createElement('div'); count.className='entry-count'; count.style.display='none';
-        const entriesWrap=document.createElement('div'); entriesWrap.className='entries';
-        for(let i=0;i<30;i++) entriesWrap.appendChild(createEntry());
-        cell.appendChild(num); cell.appendChild(count); cell.appendChild(entriesWrap); calendarEl.appendChild(cell);
-      }
-      const current=calendarEl.querySelectorAll('.day-cell').length;
-      for(let i=current;i<totalCells;i++){ const extra=document.createElement('div'); extra.className='day-cell'; calendarEl.appendChild(extra); }
-      updateEntries();
-    }
-
-    function updateEntries(){
-      document.querySelectorAll('.day-cell').forEach(cell=>{
-        const entries=cell.querySelectorAll('.entry'); let signed=0;
-        entries.forEach(ent=>{ if(ent.querySelector('input[type="text"]').value.trim()) signed++; });
-        const bubble=cell.querySelector('.entry-count');
-        if(bubble){ if(signed>0){ bubble.textContent=`${signed} signed up`; bubble.style.display='block'; } else bubble.style.display='none'; }
-        entries.forEach((ent,idx)=> ent.style.display=idx<=signed?'flex':'none');
+    const monthLabel = document.getElementById('monthLabel');
+    const settingsPanel = document.getElementById('settingsPanel');
+    // Toggle settings
+    document.getElementById('settingsBtn').onclick = () => settingsPanel.classList.toggle('open');
+    // Navigation
+    document.getElementById('prevBtn').onclick = () => { currentMonth = (currentMonth + 11) % 12; renderCalendar(); };
+    document.getElementById('nextBtn').onclick = () => { currentMonth = (currentMonth + 1) % 12; renderCalendar(); };
+    // Export (JSON)
+    document.getElementById('exportBtn').onclick = () => {
+      const data = {};
+      document.querySelectorAll('.day-cell').forEach(cell => {
+        const day = block = cell.textContent.trim().split('\n')[0];
+        if (!day || isNaN(day)) return;
+        const key = `${year}-${currentMonth+1}-${day}`;
+        data[key] = JSON.parse(localStorage.getItem(key) || 'null');
       });
-    }
-
-    document.getElementById('monthSelect').addEventListener('change', e=> renderCalendar(parseInt(e.target.value)));
-    calendarEl.addEventListener('input', updateEntries);
-    calendarEl.addEventListener('change', updateEntries);
-    document.getElementById('exportBtn').addEventListener('click', ()=>{
-      let csv=''; document.querySelectorAll('.day-cell').forEach(cell=>{
-        const dayEl=cell.querySelector('.day-number'); csv+=dayEl?`Day ${dayEl.textContent},`:'Empty,';
-        cell.querySelectorAll('.entry').forEach(ent=>{ const time=ent.querySelector('.time-input').value; const cls=ent.querySelector('select').value; const nm=ent.querySelector('input[type="text"]').value; csv+=(time+' '+cls+' '+nm).trim()+','; }); csv+='\n';
-      });
-      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const link=document.createElement('a'); link.href=URL.createObjectURL(blob);
-      const m=parseInt(document.getElementById('monthSelect').value);
-      link.download=`guild_${monthNames[m]}2025.csv`;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `guild_${monthNames[currentMonth]}2025.json`;
       link.click();
-    });
-
-    renderCalendar(parseInt(document.getElementById('monthSelect').value));
+    };
+    // Render calendar grid
+    function renderCalendar() {
+      calendarEl.innerHTML = '';
+      monthLabel.textContent = monthNames[currentMonth] + ' ' + year;
+      // Headers
+      ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+        const hd = document.createElement('div');
+        hd.className = 'day-header';
+        hd.textContent = d;
+        calendarEl.appendChild(hd);
+      });
+      // Days
+      const firstDay = new Date(year, currentMonth, 1).getDay();
+      const daysInMonth = new Date(year, currentMonth + 1, 0).getDate();
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'day-cell';
+        calendarEl.appendChild(empty);
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${year}-${currentMonth+1}-${day}`;
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        if (new Date().getFullYear() === year && new Date().getMonth() === currentMonth && new Date().getDate() === day) {
+          cell.classList.add('today');
+        }
+        cell.textContent = day;
+        // Count
+        const count = document.createElement('div');
+        count.className = 'count';
+        const saved = JSON.parse(localStorage.getItem(key) || 'null');
+        count.textContent = saved ? (saved.entries || []).length + ' ✓' : '0 ✓';
+        cell.appendChild(count);
+        // Click modal
+        cell.onclick = () => openModal(key, day);
+        calendarEl.appendChild(cell);
+      }
+      // Trailing blanks
+      const totalCells = calendarEl.querySelectorAll('.day-cell').length;
+      for (let i = totalCells; i < 35; i++) {
+        const extra = document.createElement('div');
+        extra.className = 'day-cell';
+        calendarEl.appendChild(extra);
+      }
+    }
+    // Modal
+    function openModal(key, day) {
+      const modal = document.getElementById('modal');
+      modal.classList.add('show');
+      document.getElementById('modalDate').textContent = monthNames[currentMonth] + ' ' + day + ', ' + year;
+      const entriesWrap = document.getElementById('modalEntries');
+      entriesWrap.innerHTML = '';
+      const data = JSON.parse(localStorage.getItem(key) || 'null') || { entries: [], notes: '' };
+      document.getElementById('modalNotes').value = data.notes;
+      const slots = parseInt(document.getElementById('slotCount').value, 10);
+      const [h0, m0] = document.getElementById('startHour').value.split(':').map(Number);
+      const [h1, m1] = document.getElementById('endHour').value.split(':').map(Number);
+      for (let i = 0; i < slots; i++) {
+        const ent = document.createElement('div'); ent.className = 'entry';
+        const timeEl = document.createElement('select'); timeEl.className = 'time-input';
+        for (let h = h0; h < h1; h++) {
+          const opt = document.createElement('option');
+          const h12 = h % 12 === 0 ? 12 : h % 12;
+          const ampm = h < 12 ? 'AM' : 'PM';
+          opt.value = `${h12}:00 ${ampm}`;
+          opt.textContent = opt.value;
+          timeEl.appendChild(opt);
+        }
+        const clsEl = document.createElement('select');
+        const blank = document.createElement('option'); blank.value = ''; blank.textContent = '-'; clsEl.appendChild(blank);
+        classOptions.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; clsEl.appendChild(o); });
+        const nmEl = document.createElement('input'); nmEl.type = 'text'; nmEl.placeholder = 'Name';
+        if (data.entries[i]) {
+          timeEl.value = data.entries[i].time;
+          clsEl.value = data.entries[i].cls;
+          nmEl.value = data.entries[i].nm;
+        }
+        ent.appendChild(timeEl);
+        ent.appendChild(clsEl);
+        ent.appendChild(nmEl);
+        entriesWrap.appendChild(ent);
+      }
+      document.getElementById('saveBtn').onclick = () => saveModal(key);
+    }
+    function saveModal(key) {
+      const entries = Array.from(document.getElementById('modalEntries').children).map(ent => ({
+        time: ent.children[0].value,
+        cls: ent.children[1].value,
+        nm: ent.children[2].value
+      })).filter(e => e.nm);
+      const notes = document.getElementById('modalNotes').value;
+      localStorage.setItem(key, JSON.stringify({ entries, notes }));
+      document.getElementById('modal').classList.remove('show');
+      renderCalendar();
+    }
+    document.getElementById('closeBtn').onclick = () => document.getElementById('modal').classList.remove('show');
+    // Init slots/hours defaults
+    if (!localStorage.getItem('config')) localStorage.setItem('config', JSON.stringify({ slots:10, start:'18:00', end:'23:00' }));
+    const cfg = JSON.parse(localStorage.getItem('config'));
+    document.getElementById('slotCount').value = cfg.slots;
+    document.getElementById('startHour').value = cfg.start;
+    document.getElementById('endHour').value = cfg.end;
+    document.getElementById('slotCount').onchange = document.getElementById('startHour').onchange = document.getElementById('endHour').onchange = () => {
+      localStorage.setItem('config', JSON.stringify({
+        slots: parseInt(document.getElementById('slotCount').value, 10),
+        start: document.getElementById('startHour').value,
+        end: document.getElementById('endHour').value
+      }));
+      renderCalendar();
+    };
+    renderCalendar();
   </script>
 </body>
 </html>
