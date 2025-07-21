@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guild Calendar 2025</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e2f;
+      color: white;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #ffcc00;
+    }
+    .controls {
+      text-align: center;
+      margin: 10px 0;
+    }
+    select {
+      background-color: #2b2b3d;
+      color: white;
+      border: 1px solid #666;
+      padding: 5px;
+      font-size: 14px;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background-color: #444;
+      margin-top: 10px;
+    }
+    .day-header {
+      background-color: #333;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+    }
+    .day-cell {
+      background-color: #2b2b3d;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      border: 1px solid #444;
+    }
+    .day-number {
+      font-weight: bold;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+    .entry-count {
+      width: 100%;
+      text-align: center;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #ffcc00;
+    }
+    .entries {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+    .entry {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      width: 100%;
+    }
+    .entry select, .entry input {
+      background-color: #1e1e2f;
+      color: white;
+      border: 1px solid #666;
+      padding: 2px 4px;
+      font-size: 12px;
+    }
+    .entry input {
+      flex: 1;
+    }
+    #exportBtn {
+      display: block;
+      margin: 15px auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #444;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #exportBtn:hover {
+      background-color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Guild Calendar 2025</h1>
+  <div class="controls">
+    <select id="monthSelect">
+      <option value="0">January 2025</option>
+      <option value="1">February 2025</option>
+      <option value="2">March 2025</option>
+      <option value="3">April 2025</option>
+      <option value="4">May 2025</option>
+      <option value="5">June 2025</option>
+      <option value="6" selected>July 2025</option>
+      <option value="7">August 2025</option>
+      <option value="8">September 2025</option>
+      <option value="9">October 2025</option>
+      <option value="10">November 2025</option>
+      <option value="11">December 2025</option>
+    </select>
+  </div>
+  <div id="calendar" class="calendar"></div>
+  <button id="exportBtn">Export Calendar</button>
+  <script>
+    const monthNames = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+    const classOptions = [
+      { label: 'Druid', value: '🐉' },
+      { label: 'Mage', value: '🔥' },
+      { label: 'Warrior', value: '🛡️' },
+      { label: 'Hunter', value: '🏹' },
+      { label: 'Priest', value: '🙏' },
+      { label: 'Rogue', value: '🥷' },
+      { label: 'Warlock', value: '🪄' },
+      { label: 'Shaman', value: '🌩️' },
+      { label: 'Paladin', value: '🛐' },
+      { label: 'Monk', value: '🧘' },
+      { label: 'Death Knight', value: '☠️' },
+      { label: 'Demon Hunter', value: '👿' },
+      { label: 'Evoker', value: '🧑‍💻' }
+    ];
+    const year = 2025;
+    const calendarEl = document.getElementById('calendar');
+
+    function createEntry() {
+      const entry = document.createElement('div'); entry.className = 'entry';
+      const select = document.createElement('select');
+      const blank = document.createElement('option'); blank.value = ''; blank.textContent = '-'; select.appendChild(blank);
+      classOptions.forEach(opt => {
+        const o = document.createElement('option'); o.value = opt.value; o.textContent = opt.value; o.title = opt.label; select.appendChild(o);
+      });
+      const input = document.createElement('input'); input.type = 'text'; input.placeholder = 'Name';
+      entry.appendChild(select); entry.appendChild(input);
+      return entry;
+    }
+
+    function renderCalendar(monthIndex) {
+      calendarEl.innerHTML = '';
+      // headers
+      ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(d => {
+        const hd = document.createElement('div'); hd.className = 'day-header'; hd.textContent = d; calendarEl.appendChild(hd);
+      });
+      const firstDay = new Date(year, monthIndex, 1).getDay();
+      const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+      const totalCells = 35;
+      // blank cells
+      for (let i=0;i<firstDay;i++) {
+        const empty = document.createElement('div'); empty.className='day-cell'; calendarEl.appendChild(empty);
+      }
+      // days
+      for (let day=1; day<=daysInMonth; day++) {
+        const cell = document.createElement('div'); cell.className='day-cell';
+        const num = document.createElement('div'); num.className='day-number'; num.textContent=day;
+        const count = document.createElement('div'); count.className='entry-count'; count.style.display='none';
+        const entriesWrap = document.createElement('div'); entriesWrap.className='entries';
+        for (let i=0;i<30;i++) entriesWrap.appendChild(createEntry());
+        cell.appendChild(num); cell.appendChild(count); cell.appendChild(entriesWrap);
+        calendarEl.appendChild(cell);
+      }
+      // trailing blanks
+      const current = calendarEl.querySelectorAll('.day-cell').length;
+      for (let i=current; i<totalCells; i++) {
+        const extra = document.createElement('div'); extra.className='day-cell'; calendarEl.appendChild(extra);
+      }
+      updateEntries();
+    }
+
+    function updateEntries() {
+      document.querySelectorAll('.day-cell').forEach(cell=>{
+        const inputs = cell.querySelectorAll('.entry input');
+        const entries = cell.querySelectorAll('.entry');
+        let signed=0;
+        inputs.forEach(inp=>{ if(inp.value.trim()) signed++; });
+        const bubble = cell.querySelector('.entry-count');
+        if (bubble) {
+          if (signed>0) { bubble.textContent=`${signed} signed up`; bubble.style.display='block'; }
+          else bubble.style.display='none';
+        }
+        entries.forEach((ent,idx)=>{ ent.style.display = idx<=signed ? 'flex':'none'; });
+      });
+    }
+
+    document.getElementById('monthSelect').addEventListener('change', e=>{
+      renderCalendar(parseInt(e.target.value));
+    });
+    calendarEl.addEventListener('input', updateEntries);
+    calendarEl.addEventListener('change', updateEntries);
+    // Export CSV
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      let csv='';
+      document.querySelectorAll('.day-cell').forEach(cell=>{
+        const dayEl = cell.querySelector('.day-number');
+        csv += dayEl ? `Day ${dayEl.textContent},` : 'Empty,';
+        cell.querySelectorAll('.entry').forEach(ent=>{
+          const sel=ent.querySelector('select').value;
+          const inp=ent.querySelector('input').value;
+          csv += (sel+' '+inp).trim()+',';
+        });
+        csv += '\n';
+      });
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const link=document.createElement('a'); link.href=URL.createObjectURL(blob);
+      const m=parseInt(document.getElementById('monthSelect').value);
+      link.download=`guild_${monthNames[m]}2025.csv`;
+      link.click();
+    });
+
+    // initial render
+    renderCalendar(parseInt(document.getElementById('monthSelect').value));
+  </script>
+</body>
+</html>
